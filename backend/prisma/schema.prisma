@@ -1,68 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgres"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
-model dislikedprofiles {
-  player_id                                            Int
-  disliked_player_id                                   Int
-  disliked_at                                          DateTime? @default(now()) @db.Timestamp(6)
-  players_dislikedprofiles_disliked_player_idToplayers players   @relation("dislikedprofiles_disliked_player_idToplayers", fields: [disliked_player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
-  players_dislikedprofiles_player_idToplayers          players   @relation("dislikedprofiles_player_idToplayers", fields: [player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
+
+model Player {
+  player_id         Int       @id @default(autoincrement())
+  first_name        String    @db.VarChar(50)
+  last_name         String    @db.VarChar(50)
+  username          String    @unique @db.VarChar(50)
+  email             String    @unique @db.VarChar(255)
+  password          String   @db.VarChar(255)
+  Date_of_birth     DateTime  @db.Date
+  preferred_pronouns String  @db.VarChar(50)
+  zip_code           String   @db.VarChar(5)
+  photo              String    @db.VarChar(500)
+
+  playerProfile PlayerProfile?
+  dislikedPlayer DislikedProfile[] @relation("dislikedprofiles_disliked_player_idToplayer")
+
+  dislikingPlayer DislikedProfile[] @relation("dislikedprofiles_player_idToplayer")
+
+  likedPlayer LikedProfile[] @relation("likedprofiles_liked_player_idToplayer") 
+  likingPlayer LikedProfile[] @relation("likedprofiles_player_idToplayer")
+
+  matchedprofiles_as_player_id_1 MatchedProfile[] @relation("matchedprofiles_player_id_1Toplayer")
+
+  matchedprofiles_as_player_id_2 MatchedProfile[] @relation("matchedprofiles_player_id_2Toplayer")
+}
+
+model PlayerProfile {
+  profile_id               Int       @id @default(autoincrement())
+  player_id                Int       @unique
+  top_games                String?   @db.VarChar(255)
+  favorite_gaming_device   String?   @db.VarChar(100)
+  biggest_gaming_pet_peeve String?   @db.VarChar(255)
+  looking_for              String?   @db.VarChar(255)
+    player                Player @relation(fields: [player_id], references: [player_id])
+}
+
+
+model DislikedProfile {
+  player_id            Int
+  disliked_player_id   Int
+  player_dislikedprofiles_disliked_player_idToplayer Player   @relation("dislikedprofiles_disliked_player_idToplayer", fields: [disliked_player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
+  player_dislikedprofiles_player_idToplayer          Player   @relation("dislikedprofiles_player_idToplayer", fields: [player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([player_id, disliked_player_id])
 }
 
-model gamingpreferences {
-  player_id         Int     @id
-  genre             String? @db.VarChar(50)
-  top_games         String? @db.VarChar(255)
-  preferred_devices String? @db.VarChar(100)
-  players           players @relation(fields: [player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model likedprofiles {
-  player_id                                      Int
-  liked_player_id                                Int
-  liked_at                                       DateTime? @default(now()) @db.Timestamp(6)
-  players_likedprofiles_liked_player_idToplayers players   @relation("likedprofiles_liked_player_idToplayers", fields: [liked_player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
-  players_likedprofiles_player_idToplayers       players   @relation("likedprofiles_player_idToplayers", fields: [player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
+model LikedProfile {
+  player_id            Int
+  liked_player_id      Int
+  player_likedprofiles_liked_player_idToplayer  Player   @relation("likedprofiles_liked_player_idToplayer", fields: [liked_player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
+  player_likedprofiles_player_idToplayer   Player   @relation("likedprofiles_player_idToplayer", fields: [player_id], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([player_id, liked_player_id])
 }
 
-model matchedprofiles {
-  player_id_1                                  Int
-  player_id_2                                  Int
-  matched_at                                   DateTime? @default(now()) @db.Timestamp(6)
-  players_matchedprofiles_player_id_1Toplayers players   @relation("matchedprofiles_player_id_1Toplayers", fields: [player_id_1], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
-  players_matchedprofiles_player_id_2Toplayers players   @relation("matchedprofiles_player_id_2Toplayers", fields: [player_id_2], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
+model MatchedProfile {
+  player_id_1          Int
+  player_id_2          Int
+  player_matchedprofiles_player_id_1Toplayer Player   @relation("matchedprofiles_player_id_1Toplayer", fields: [player_id_1], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
+
+  player_matchedprofiles_player_id_2Toplayer Player   @relation("matchedprofiles_player_id_2Toplayer", fields: [player_id_2], references: [player_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([player_id_1, player_id_2])
-}
-
-model players {
-  player_id                                                     Int                @id @default(autoincrement())
-  first_name                                                    String             @db.VarChar(50)
-  last_name                                                     String             @db.VarChar(50)
-  username                                                      String             @unique @db.VarChar(50)
-  email                                                         String             @unique @db.VarChar(255)
-  password                                                      String?            @db.VarChar(255)
-  age                                                           Int?
-  preferred_pronouns                                            String?            @db.VarChar(50)
-  zip_code                                                      String?            @db.VarChar(5)
-  photo                                                         String             @db.VarChar(500)
-  created_at                                                    DateTime?          @default(now()) @db.Timestamp(6)
-  last_login                                                    DateTime?          @db.Timestamp(6)
-  dislikedprofiles_dislikedprofiles_disliked_player_idToplayers dislikedprofiles[] @relation("dislikedprofiles_disliked_player_idToplayers")
-  dislikedprofiles_dislikedprofiles_player_idToplayers          dislikedprofiles[] @relation("dislikedprofiles_player_idToplayers")
-  gamingpreferences                                             gamingpreferences?
-  likedprofiles_likedprofiles_liked_player_idToplayers          likedprofiles[]    @relation("likedprofiles_liked_player_idToplayers")
-  likedprofiles_likedprofiles_player_idToplayers                likedprofiles[]    @relation("likedprofiles_player_idToplayers")
-  matchedprofiles_matchedprofiles_player_id_1Toplayers          matchedprofiles[]  @relation("matchedprofiles_player_id_1Toplayers")
-  matchedprofiles_matchedprofiles_player_id_2Toplayers          matchedprofiles[]  @relation("matchedprofiles_player_id_2Toplayers")
 }
