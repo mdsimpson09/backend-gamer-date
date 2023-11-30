@@ -11,6 +11,7 @@ const router = express.Router();
 
 // Get all players
 router.get('/', async (req, res, next) => {
+   console.log(9)
     try {
       const players = await prisma.players.findMany(); 
       return res.json({ players });
